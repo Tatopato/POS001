@@ -1,27 +1,264 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+
 const auth = useAuthStore()
 const router = useRouter()
-function logout() { auth.logout(); router.replace('/login') }
+const route = useRoute()
+const menuOpen = ref(false)
+
+function logout() {
+  menuOpen.value = false
+  auth.logout()
+  router.replace('/login')
+}
+
+function closeMenu() {
+  menuOpen.value = false
+}
+
+watch(() => route.path, closeMenu)
 </script>
+
 <template>
-    <div class="min-h-screen bg-gray-100">
-        <aside class="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white p-5">
-            <h1 class="text-xl font-bold mb-6">POS Store</h1>
-            <nav class="space-y-2">
-                <RouterLink to="/owner" class="block rounded px-3 py-2 hover:bg-gray-800">สรุปข้อมูลการขาย</RouterLink>
-                <RouterLink to="/owner/inventory" class="block rounded px-3 py-2 hover:bg-gray-800">คลังสินค้า</RouterLink>
-                <RouterLink to="/owner/employees" class="block rounded px-3 py-2 hover:bg-gray-800">พนักงาน
-                </RouterLink>
-                <RouterLink to="/owner/promotions" class="block rounded px-3 py-2 hover:bg-gray-800">โปรโมชั่น</RouterLink>
-                <RouterLink to="/owner/restock-requests" class="block rounded px-3 py-2 hover:bg-gray-800">คำขอเพิ่มจำนวนสินค้า</RouterLink>
-                <RouterLink to="/owner/sales-history" class="block rounded px-3 py-2 hover:bg-gray-800">ประวัติการขาย</RouterLink>
-                <RouterLink to="/owner/delete-store" class="block rounded px-3 py-2 hover:bg-gray-800">ยื่นคำขอปิดร้านค้า</RouterLink>
-            </nav><button class="mt-8 cursor-pointer rounded bg-red-600 px-3 py-2" @click="logout">Logout</button>
-        </aside>
-        <main class="ml-64 p-6">
-            <RouterView />
-        </main>
-    </div>
+  <div class="owner-layout">
+    <header class="mobile-topbar">
+      <button type="button" class="mobile-menu-button" aria-label="เปิดเมนู" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="mobile-topbar-title">POS Store</div>
+    </header>
+
+    <div v-if="menuOpen" class="sidebar-backdrop" aria-hidden="true" @click="closeMenu"></div>
+
+    <aside class="owner-sidebar" :class="{ 'is-open': menuOpen }">
+      <div class="sidebar-header">
+        <h1 class="sidebar-brand">POS Store</h1>
+        <button type="button" class="sidebar-close" aria-label="ปิดเมนู" @click="closeMenu">×</button>
+      </div>
+
+      <nav class="owner-nav">
+        <RouterLink to="/owner" class="sidebar-link">สรุปข้อมูลการขาย</RouterLink>
+        <RouterLink to="/owner/inventory" class="sidebar-link">คลังสินค้า</RouterLink>
+        <RouterLink to="/owner/employees" class="sidebar-link">พนักงาน</RouterLink>
+        <RouterLink to="/owner/promotions" class="sidebar-link">โปรโมชั่น</RouterLink>
+        <RouterLink to="/owner/restock-requests" class="sidebar-link">คำขอเพิ่มจำนวนสินค้า</RouterLink>
+        <RouterLink to="/owner/sales-history" class="sidebar-link">ประวัติการขาย</RouterLink>
+        <RouterLink to="/owner/delete-store" class="sidebar-link">ยื่นคำขอปิดร้านค้า</RouterLink>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-logout" @click="logout">Logout</button>
+      </div>
+    </aside>
+
+    <main class="owner-main">
+      <RouterView />
+    </main>
+  </div>
 </template>
+
+<style scoped>
+.owner-layout {
+  min-height: 100dvh;
+  background: #f3f4f6;
+}
+
+.owner-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 50;
+  width: 250px;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  background: #111827;
+  color: #fff;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  margin-bottom: 28px;
+}
+
+.sidebar-brand {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+
+.owner-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  line-height: 1.35;
+  text-decoration: none;
+  color: #f9fafb;
+  font-size: 14px;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.sidebar-link:hover,
+.sidebar-link.router-link-active {
+  background: #1f2937;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+.sidebar-logout {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: #dc2626;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sidebar-logout:hover {
+  background: #b91c1c;
+}
+
+.owner-main {
+  min-width: 0;
+  margin-left: 250px;
+  min-height: 100dvh;
+  padding: 32px clamp(24px, 3vw, 48px);
+}
+
+.mobile-topbar,
+.mobile-menu-button,
+.sidebar-close,
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .owner-sidebar {
+    width: min(300px, 86vw);
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    box-shadow: 14px 0 36px rgba(0, 0, 0, .2);
+  }
+
+  .owner-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .owner-main {
+    margin-left: 0;
+    padding: 76px 24px 24px;
+  }
+
+  .mobile-topbar {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 30;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    background: rgba(255, 255, 255, .96);
+    border-bottom: 1px solid #e5e7eb;
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-topbar-title {
+    margin-left: 54px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .mobile-menu-button {
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    display: flex;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    background: #fff;
+    color: #111827;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .07);
+    cursor: pointer;
+  }
+
+  .mobile-menu-button span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .sidebar-close {
+    display: block;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: block;
+    background: rgba(15, 23, 42, .48);
+  }
+}
+
+@media (max-width: 767px) {
+  .owner-main {
+    padding: 72px 16px 20px;
+  }
+}
+
+@media (max-width: 479px) {
+  .owner-main {
+    padding: 68px 12px 16px;
+  }
+
+  .mobile-topbar {
+    height: 56px;
+    padding: 0 14px;
+  }
+
+  .mobile-menu-button {
+    top: 8px;
+    left: 10px;
+  }
+
+  .mobile-topbar-title {
+    margin-left: 50px;
+  }
+}
+</style>
